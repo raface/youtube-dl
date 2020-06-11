@@ -1,13 +1,14 @@
 from __future__ import unicode_literals
 
+import json
 import random
 import re
 import string
 
 from .discoverygo import DiscoveryGoBaseIE
+from ..compat import compat_HTTPError
 from ..compat import compat_urllib_parse_unquote
 from ..utils import ExtractorError
-from ..compat import compat_HTTPError
 
 
 class DiscoveryIE(DiscoveryGoBaseIE):
@@ -73,7 +74,18 @@ class DiscoveryIE(DiscoveryGoBaseIE):
             auth_storage = self._parse_json(compat_urllib_parse_unquote(
                 compat_urllib_parse_unquote(auth_storage_cookie.value)),
                 display_id, fatal=False) or {}
-            access_token = auth_storage.get('a') or auth_storage.get('access_token')
+            # Always renew affiliate auth token to avoid expired tokens
+            refresh_token = auth_storage.get('r') or auth_storage.get('refresh_token')
+            renewed_access_token = self._download_json(
+                'https://%s.com/affiliate' % site, display_id,
+                'Downloading token JSON metadata', query={
+                    'env': 'https%3A%2F%2Flogin.discovery.com',
+                    'state': ''.join([random.choice(string.ascii_letters) for _ in range(32)])
+                },
+                headers={'content-type': 'application/json'},
+                data=json.dumps({'refreshToken': refresh_token}).encode('utf-8')
+            )
+            access_token = renewed_access_token.get('a') or renewed_access_token.get('access_token')
 
         if not access_token:
             access_token = self._download_json(
