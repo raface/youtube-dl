@@ -686,6 +686,10 @@ def parseOpts(overrideArguments=None):
         '--id', default=False,
         action='store_true', dest='useid', help='Use only video ID in file name')
     filesystem.add_option(
+        '--concat',
+        dest='concat', metavar='TEMPLATE',
+        help=('Output filename template of joined videos in a playlist, see the "OUTPUT TEMPLATE" for all the info'))
+    filesystem.add_option(
         '-o', '--output',
         dest='outtmpl', metavar='TEMPLATE',
         help=('Output filename template, see the "OUTPUT TEMPLATE" for all the info'))
