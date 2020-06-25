@@ -191,9 +191,27 @@ class MTVServicesInfoExtractor(InfoExtractor):
             return None
 
         self._sort_formats(formats)
+        title_info = None
+        if '|' in title:
+            title_info = title.split('|')
+
+        title = title_info[4] if title_info else title
+        if 'Untucked' in title:
+            series = title_info[0]+ ': Untucked!' if title_info else None
+        else:
+            series = title_info[0] if title_info else None
+        airDate = title_info[1] if title_info else None
+        season_number = int(title_info[2]) if title_info else None
+        episode_number = int(title_info[3][-2:]) if title_info else None
+        item_title = title_info[5] if title_info else None
 
         return {
             'title': title,
+            'series': series,
+            'airDate': airDate,
+            'season_number': season_number,
+            'episode_number': episode_number,
+            'item_title': item_title,
             'formats': formats,
             'subtitles': self._extract_subtitles(mediagen_doc, mtvn_id),
             'id': video_id,
