@@ -100,6 +100,7 @@ from .extractor.openload import PhantomJSwrapper
 from .downloader import get_suitable_downloader
 from .downloader.rtmp import rtmpdump_version
 from .postprocessor import (
+    FFmpegConcatPP,
     FFmpegFixupM3u8PP,
     FFmpegFixupM4aPP,
     FFmpegFixupStretchedPP,
@@ -188,6 +189,7 @@ class YoutubeDL(object):
     listsubtitles:     Lists all available subtitles for the video
     subtitlesformat:   The format code for subtitles
     subtitleslangs:    List of languages of the subtitles to download
+    concat:            Join videos in a playlist end-to-end
     keepvideo:         Keep the video file after post-processing
     daterange:         A DateRange object, download only if the upload_date is in the range.
     skip_download:     Skip the actual download of the video file
@@ -1009,6 +1011,30 @@ class YoutubeDL(object):
                 playlist_results.append(entry_result)
             ie_result['entries'] = playlist_results
             self.to_screen('[download] Finished downloading playlist: %s' % playlist)
+
+            if self.params.get('concat', False):
+                concat = FFmpegConcatPP(self)
+                if concat.available():
+                    postprocessors = [concat]
+                else:
+                    postprocessors = []
+                    self.report_warning(
+                        'You have requested to concatenate multiple files'
+                        'but ffmpeg or avconv are not installed.'
+                        ' The files won\'t be concatenated.')
+                downloaded = []
+                for video in playlist_results:
+                    new_info = dict(ie_result)
+                    new_info.update(video)
+                    ie_result['ext'] = video['ext']
+                    fname = self.prepare_filename(new_info)
+                    downloaded.append(fname)
+                filename = self.prepare_filename(ie_result)
+                ie_result['__postprocessors'] = postprocessors
+                ie_result['__files_to_append'] = downloaded
+
+                self.post_process(filename, ie_result)
+
             return ie_result
         elif result_type == 'compat_list':
             self.report_warning(
