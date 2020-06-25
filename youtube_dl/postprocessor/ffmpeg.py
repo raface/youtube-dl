@@ -203,7 +203,7 @@ class FFmpegPostProcessor(PostProcessor):
                 return mobj.group(1)
         return None
 
-    def run_ffmpeg_multiple_files(self, input_paths, out_path, opts, via_stdin=False):
+    def run_ffmpeg_multiple_files(self, input_paths, out_path, opts, preopts=None):
         self.check_version()
 
         oldest_mtime = min(
@@ -212,30 +212,26 @@ class FFmpegPostProcessor(PostProcessor):
         opts += self._configuration_args()
 
         files_cmd = []
-        stdin_cmd = u''
+        preopt_cmd = []
+        if preopts:
+            preopt_cmd = preopts
         for path in input_paths:
-            if via_stdin:
-                stdin_cmd += u"file '%s'\n" % encodeFilename(path, True)
-            else:
-                files_cmd.extend([
-                    encodeArgument('-i'),
-                    encodeFilename(self._ffmpeg_filename_argument(path), True)
-                ])
+            files_cmd.extend([
+                encodeArgument('-i'),
+                encodeFilename(self._ffmpeg_filename_argument(path), True)
+            ])
         cmd = [encodeFilename(self.executable, True), encodeArgument('-y')]
         # avconv does not have repeat option
         if self.basename == 'ffmpeg':
             cmd += [encodeArgument('-loglevel'), encodeArgument('repeat+info')]
-        cmd += (files_cmd
+        cmd += (preopt_cmd + files_cmd
                 + [encodeArgument(o) for o in opts]
                 + [encodeFilename(self._ffmpeg_filename_argument(out_path), True)])
 
         if self._downloader.params.get('verbose', False):
             self._downloader.to_screen('[debug] ffmpeg command line: %s' % shell_quote(cmd))
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-        if via_stdin:
-            stdout, stderr = p.communicate(input=stdin_cmd.encode('utf-8'))
-        else:
-            stdout, stderr = p.communicate()
+        stdout, stderr = p.communicate()
         if p.returncode != 0:
             stderr = stderr.decode('utf-8', 'replace')
             msg = stderr.strip().split('\n')[-1]
@@ -552,14 +548,15 @@ class FFmpegMergerPP(FFmpegPostProcessor):
 class FFmpegConcatPP(FFmpegPostProcessor):
     def run(self, info):
         filename = info['filepath']
-        args = ['-f', 'concat', '-safe', '0', '-i', '-', '-c', 'copy']
-        self._downloader.to_screen(u'[ffmpeg] Concatenating files into "%s"' % filename)
-        self.run_ffmpeg_multiple_files(info['__files_to_append'], filename, args, via_stdin=True)
-        if self._downloader.params.get('keepvideo', False) is False:
-            for path in info['__files_to_append']:
-                self._downloader.to_screen('Deleting original file %s (pass -k to keep)' % filename)
-                os.remove(encodeFilename(path))
-        return True, info
+        concatargs = ['-f', 'concat', '-safe', '0']
+        args = ['-c', 'copy']
+        self._downloader.to_screen(u'[ffmpeg] Appending files into "%s"' % filename)
+        with open(u'youtube-dl_ffmpeg_append_list.txt', 'w') as f:
+            for file in info['__files_to_append']:
+                f.write("file '" + file + "'\n")
+        self.run_ffmpeg_multiple_files([u'youtube-dl_ffmpeg_append_list.txt'], filename, args, preopts=concatargs)
+        os.unlink('youtube-dl_ffmpeg_append_list.txt')
+        return info['__files_to_append'], info
 
 
 class FFmpegFixupStretchedPP(FFmpegPostProcessor):

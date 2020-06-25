@@ -189,7 +189,7 @@ class YoutubeDL(object):
     listsubtitles:     Lists all available subtitles for the video
     subtitlesformat:   The format code for subtitles
     subtitleslangs:    List of languages of the subtitles to download
-    concat:            Join videos in a playlist end-to-end
+    concat:            Template for output name of joined videos in a playlist
     keepvideo:         Keep the video file after post-processing
     daterange:         A DateRange object, download only if the upload_date is in the range.
     skip_download:     Skip the actual download of the video file
@@ -1029,7 +1029,8 @@ class YoutubeDL(object):
                     ie_result['ext'] = video['ext']
                     fname = self.prepare_filename(new_info)
                     downloaded.append(fname)
-                filename = self.prepare_filename(ie_result)
+                self.params['outtmpl'] = self.params.get('concat') if self.params.get('concat') else None
+                filename = self.prepare_filename(new_info)
                 ie_result['__postprocessors'] = postprocessors
                 ie_result['__files_to_append'] = downloaded
 
