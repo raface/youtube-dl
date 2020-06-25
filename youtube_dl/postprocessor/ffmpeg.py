@@ -552,7 +552,7 @@ class FFmpegMergerPP(FFmpegPostProcessor):
 class FFmpegConcatPP(FFmpegPostProcessor):
     def run(self, info):
         filename = info['filepath']
-        args = ['-f', 'concat', '-i', '-', '-c', 'copy']
+        args = ['-f', 'concat', '-safe', '0', '-i', '-', '-c', 'copy']
         self._downloader.to_screen(u'[ffmpeg] Concatenating files into "%s"' % filename)
         self.run_ffmpeg_multiple_files(info['__files_to_append'], filename, args, via_stdin=True)
         if self._downloader.params.get('keepvideo', False) is False:

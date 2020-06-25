@@ -1013,7 +1013,7 @@ class YoutubeDL(object):
             self.to_screen('[download] Finished downloading playlist: %s' % playlist)
 
             if self.params.get('concat', False):
-                concat = FFmpegConcatPP()
+                concat = FFmpegConcatPP(self)
                 if concat.available:
                     postprocessors = [concat]
                 else:
