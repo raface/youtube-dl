@@ -1029,12 +1029,14 @@ class YoutubeDL(object):
                     ie_result['ext'] = video['ext']
                     fname = self.prepare_filename(new_info)
                     downloaded.append(fname)
-                self.params['outtmpl'] = self.params.get('concat') if self.params.get('concat') else None
+                old_outtmpl = self.params['outtmpl']
+                self.params['outtmpl'] = self.params.get('concat') if self.params.get('concat') else old_outtmpl
                 filename = self.prepare_filename(new_info)
                 ie_result['__postprocessors'] = postprocessors
                 ie_result['__files_to_append'] = downloaded
-
                 self.post_process(filename, ie_result)
+
+                self.params['outtmpl'] = old_outtmpl
 
             return ie_result
         elif result_type == 'compat_list':

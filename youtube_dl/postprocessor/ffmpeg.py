@@ -556,7 +556,6 @@ class FFmpegConcatPP(FFmpegPostProcessor):
             for file in info['__files_to_append']:
                 f.write("file '" + file + "'\n")
         self.run_ffmpeg_multiple_files([tmp_file], filename, args, preopts=concatargs)
-        os.unlink(tmp_file)
         return info['__files_to_append'], info
 
 
