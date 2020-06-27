@@ -1023,6 +1023,7 @@ class YoutubeDL(object):
                         'but ffmpeg or avconv are not installed.'
                         ' The files won\'t be concatenated.')
                 downloaded = []
+                new_info = {}
                 for video in playlist_results:
                     new_info = dict(ie_result)
                     new_info.update(video)
