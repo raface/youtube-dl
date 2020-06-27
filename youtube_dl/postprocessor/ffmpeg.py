@@ -551,11 +551,12 @@ class FFmpegConcatPP(FFmpegPostProcessor):
         concatargs = ['-f', 'concat', '-safe', '0']
         args = ['-c', 'copy']
         self._downloader.to_screen(u'[ffmpeg] Appending files into "%s"' % filename)
-        with open(u'youtube-dl_ffmpeg_append_list.txt', 'w') as f:
+        tmp_file = f"/tmp/{time.time()}"
+        with open(tmp_file, 'w') as f:
             for file in info['__files_to_append']:
                 f.write("file '" + file + "'\n")
-        self.run_ffmpeg_multiple_files([u'youtube-dl_ffmpeg_append_list.txt'], filename, args, preopts=concatargs)
-        os.unlink('youtube-dl_ffmpeg_append_list.txt')
+        self.run_ffmpeg_multiple_files([tmp_file], filename, args, preopts=concatargs)
+        os.unlink(tmp_file)
         return info['__files_to_append'], info
 
 
